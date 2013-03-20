@@ -154,14 +154,38 @@ public class WeightedDigraph{
 		removeOuts(g, root);
 		removeIns(g, root);
 		
+		//swap the root out for its underlying vertex
+		replaceVertex(g, root, root.underlying());
+		
 		// foreach vertex in the pseudovertex
 		// add its input and output connections back using the contained graph for reference
 		for (Vertex v : root.vertices()) {
 			g.addEdges(root.graph().eOuts(v));
-			g.addEdges(root.graph().eIns(v));
+			//we need to be careful to not add internal edges twice, so the inputs will have to be pruned of internal edges
+			for(Edge e : root.graph().eIns(v)){
+				if(!containsId(root.vertices(), e.left)){
+					g.addEdge(e);
+				}
+			}
 		}
 		
 		return g;
+	}
+
+	/**
+	 * @param root
+	 * @param e
+	 * @return
+	 */
+	private boolean containsId(List<Vertex> vertices, int id) {
+		boolean idFound = false;
+		for(Vertex w : vertices){
+			if(w.id() == id){
+				idFound = true;
+				break;
+			}
+		}
+		return idFound;
 	}
 	
 	private void addEdges(List<Edge> edges) {
@@ -194,31 +218,56 @@ public class WeightedDigraph{
 	 * @return
 	 */
 	public WeightedDigraph contractCycle(Vertex root, ArrayList<Vertex> cycle) {
+		final boolean REMOVE_SELF_LOOPS = true;
 		WeightedDigraph g = new WeightedDigraph(this);
-		List<Vertex> rootNeighbors = g.vOuts(root);
 		Vertex pseudo = new PseudoVertex(root.id(), cycle, this);
+		
+		// replace the id references of root with the pseudonode
+		replaceVertex(g, root, pseudo);
 		
 		// replace the input and output connections to the vertices in the cycle (not the root) with the pseudonode
 		for (Vertex v : cycle) {
 			if (v != root) {
 				// add all of its neighbors to the pseudonode
-				addOutArcs(g, pseudo, eOuts(v));
+				addOutArcs(g, pseudo, g.eOuts(v));
 				// remove all of its outgoing arcs ( remember this node is not connected to anything anymore
 				removeOuts(g, v);
 				// replace all arcs to the node with connections to the pseudo node
-				replaceVertexInArcs(g, v, pseudo);
+				replaceVertexInArcs(g, v, pseudo, REMOVE_SELF_LOOPS);
 			}
 		}
 		
-		// replace the id references of root with the pseudonode
-		g.vertexLookup.remove(root.id());
-		g.vertexLookup.put(root.id(), pseudo);
-		g.vertices.remove(root);
-		g.vertices.put(pseudo, root.id());
-		
+		//replace the outputs from the root that are contained within the cycle
+		removeOuts(g, pseudo, cycle);
+				
 		return g;
 	}
+
+	/**
+	 * @param g
+	 * @param vBefore
+	 * @param vAfter
+	 */
+	private void replaceVertex(WeightedDigraph g, Vertex vBefore, Vertex vAfter) {
+		g.vertexLookup.remove(vBefore.id());
+		g.vertexLookup.put(vBefore.id(), vAfter);
+		g.vertices.remove(vBefore);
+		g.vertices.put(vAfter, vBefore.id());
+	}
 	
+	private void removeOuts(WeightedDigraph g, Vertex v, ArrayList<Vertex> cycle) {
+		Iterator<Edge> it = g.eOuts(v).iterator();
+		while(it.hasNext()){
+			Edge e = it.next();
+			for(Vertex w : cycle){
+				if(e.right == w.id()){
+					it.remove();
+				}
+			}
+		}
+		
+	}
+
 	public static void removeOuts(WeightedDigraph g, Vertex v) {
 		g.eOuts(v).clear();
 	}
@@ -255,13 +304,17 @@ public class WeightedDigraph{
 	 * @param old
 	 * @param _new
 	 */
-	public static void replaceVertexInArcs(WeightedDigraph g, Vertex old, Vertex _new) {
+	public static void replaceVertexInArcs(WeightedDigraph g, Vertex old, Vertex _new, boolean removeSelfLoops) {
 		// foreach edge replace their connection with the old vertex with a connection to the new vertex
 		for (int i = 0; i < g.adjList.length; i++ ) {
-			List<Edge> outputs = g.eOuts(i);
-			for (Edge oute : outputs) {
+			Iterator<Edge> it = g.eOuts(i).iterator();
+			while(it.hasNext()){
+				Edge oute = it.next();
 				if (oute.left == old.id()) {
 					oute.left = _new.id();
+					//if(removeSelfLoops && oute.isLoop()){
+					//	it.remove();
+					//}
 				}
 			}
 		}
@@ -310,4 +363,18 @@ public class WeightedDigraph{
 		return true;
 	}
 	
+	@Override
+	public String toString() {
+		StringBuffer print = new StringBuffer("[");
+		for(List<Edge> list : adjList){
+			print.append(String.format("%s,", list.toString()));
+		}
+		//handle empty adjacency list
+		if(print.length() >1){
+			print.setCharAt(print.length()-1, ']');
+		}else{
+			print.append(']');
+		}
+		return print.toString();
+	}
 }

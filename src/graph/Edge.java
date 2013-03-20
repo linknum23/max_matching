@@ -9,13 +9,22 @@ public class Edge {
 		this.left = left;
 	}
 	
-	public Edge(int right, int left, int weight){
+	public Edge(int left, int right, int weight){
 		this.right = right;
 		this.left = left;
 		this.weight = weight;
 	}
 
 	public Edge(Edge e) {
-		this(e.right, e.left, e.weight);
+		this(e.left, e.right, e.weight);
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("%d--(%d)->%d", left, weight, right);
+	}
+
+	public boolean isLoop() {
+		return left == right;
 	}
 }

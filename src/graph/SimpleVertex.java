@@ -12,4 +12,8 @@ public class SimpleVertex implements Vertex {
 		return id;
 	}
 	
+	@Override
+	public String toString(){
+		return String.format("v%d", id );
+	}
 }

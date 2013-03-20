@@ -27,4 +27,13 @@ public class PseudoVertex implements Vertex {
 		return g;		
 	}
 	
+	@Override
+	public String toString(){
+		return String.format("V%d{%s}", id, innerVertices.toString());
+	}
+
+	public Vertex underlying() {
+		return g.vertex(id());
+	}
+	
 }
