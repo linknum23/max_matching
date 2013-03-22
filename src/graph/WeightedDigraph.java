@@ -162,7 +162,7 @@ public class WeightedDigraph{
 		for (Vertex v : root.vertices()) {
 			g.addEdges(root.graph().eOuts(v));
 			//we need to be careful to not add internal edges twice, so the inputs will have to be pruned of internal edges
-			for(Edge e : root.graph().eIns(v)){
+			for(Edge e : root.graph().eIns(v.id())){
 				if(!containsId(root.vertices(), e.left)){
 					g.addEdge(e);
 				}
@@ -171,6 +171,8 @@ public class WeightedDigraph{
 		
 		return g;
 	}
+
+
 
 	/**
 	 * @param root
@@ -198,16 +200,20 @@ public class WeightedDigraph{
 		return right(eIns(v));
 	}
 	
-	private List<Edge> eIns(Vertex v) {
+	private List<Edge> eIns(int id) {
 		List<Edge> eins = new ArrayList<Edge>();
 		for (List<Edge> edges : adjList) {
 			for (Edge e : edges) {
-				if (e.left == v.id()) {
+				if (e.right == id) {
 					eins.add(e);
 				}
 			}
 		}
 		return eins;
+	}
+	
+	private List<Edge> eIns(Vertex v) {
+		return eIns(v.id());
 	}
 	
 	/**
@@ -353,12 +359,15 @@ public class WeightedDigraph{
 
 	private boolean equiv(List<Edge> list1, List<Edge> list2) {
 		for(Edge e1 : list1){
+			boolean equiv = false;
 			for(Edge e2 : list2){
 				if(e1.equals(e2)){
-					break;
+					equiv = true;
 				}
 			}
-			return false;
+			if(equiv == false){
+				return false;
+			}
 		}
 		return true;
 	}

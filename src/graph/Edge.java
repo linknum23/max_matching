@@ -27,4 +27,10 @@ public class Edge {
 	public boolean isLoop() {
 		return left == right;
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		Edge e = (Edge) obj;
+		return e.right == right && e.left == left && e.weight == weight;
+	}
 }
