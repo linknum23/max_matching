@@ -386,4 +386,8 @@ public class WeightedDigraph{
 		}
 		return print.toString();
 	}
+
+	public int numVertices() {
+		return adjList.length;
+	}
 }

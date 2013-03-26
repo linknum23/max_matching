@@ -6,7 +6,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ GraphLoadingTest.class , BlossomTest.class, MatchingTest.class})
+@SuiteClasses({ GraphLoadingTest.class , BlossomTest.class, MatchingTest.class, SimpleAlgTest.class})
 public class AllTests {
 	
 }
