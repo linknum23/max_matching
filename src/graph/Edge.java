@@ -33,4 +33,8 @@ public class Edge {
 		Edge e = (Edge) obj;
 		return e.right == right && e.left == left && e.weight == weight;
 	}
+	
+	@Override
+	public int hashCode() {
+		return right ^ left ^ weight;}
 }
