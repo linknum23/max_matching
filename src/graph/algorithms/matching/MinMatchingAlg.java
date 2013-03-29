@@ -3,6 +3,7 @@ package graph.algorithms.matching;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -17,9 +18,16 @@ import graph.WeightedDigraph;
  */
 public class MinMatchingAlg {
 	private static final int NOT_AN_INDEX = -1;
+	/**	Matching storage */
 	private final int[] mate; 
+	/** Exposed Vertices*/
 	private final int[] exposed; 
+	/** */
 	private final int[] label;
+	
+	private final int[] blossom; //stores vertices blossom correspondence
+	
+	private final boolean[] marked; // used for additional searches
 	
 	/** Original Graph**/
 	private final WeightedDigraph gOrig;
@@ -30,15 +38,20 @@ public class MinMatchingAlg {
 	/** Vertex search queue**/
 	private final Queue<Integer> Q;
 	private final boolean[]	seen; //keep track of visited vertices
+	private int largestBlossom;
 	/**
 	 * @param g graph to find the minimal matching of
 	 * @param m initial matching
 	 */
 	public MinMatchingAlg(WeightedDigraph g, Matching m){
-		mate = new int[g.numVertices()];
-		exposed = new int [g.numVertices()];
-		seen = new boolean[g.numVertices()];
-		label = new int[g.numVertices()];
+		int graphSzWithMaxBlossoms = g.numVertices()*2;
+		mate = new int[graphSzWithMaxBlossoms];
+		exposed = new int [graphSzWithMaxBlossoms];
+		seen = new boolean[graphSzWithMaxBlossoms];
+		label = new int[graphSzWithMaxBlossoms];
+		blossom = new int[graphSzWithMaxBlossoms];
+		marked = new boolean[graphSzWithMaxBlossoms];
+		largestBlossom = g.numVertices()-1;
 		
 		A = new HashSet<Edge>(g.numVertices());
 		Q = (Queue<Integer>) new PriorityQueue<Integer>(g.numVertices());
@@ -48,6 +61,7 @@ public class MinMatchingAlg {
 	public void run(){
 		//for all v in V initialize mate and exposed to NOT_AN_INDEX
 		Arrays.fill(mate, NOT_AN_INDEX);
+		Arrays.fill(blossom, NOT_AN_INDEX);
 		
 		//while there is a u in V with considered[u]=0 and mate[u]=0 do
 		stage: for(int u = 0; u < gOrig.numVertices(); u++){
@@ -121,9 +135,62 @@ public class MinMatchingAlg {
 		}
 	}
 
-	private void blossom(int w) {
-		// TODO Auto-generated method stub
+	private void blossom(int v) {
 		
+		//create a new blossom
+		largestBlossom ++;
+		Arrays.fill(marked, false);
+		
+		//find the basis of the blossom adding all of the nodes on the way into the blossom correspondence 
+		// this can be done by backtracking the label array until the first common node is found between the two paths
+		
+		//backtrack all the way to the top marking the traversed vertices
+		int z = v;
+
+		do{
+			marked[z] = true;
+			z = label[z];
+		}while(z != NOT_AN_INDEX);
+		
+		//backtrack from the mate of v until the vertex is already marked, this is the start of the blossom
+		z = mate[v];
+		do{
+			addToBlossom(largestBlossom, z);
+			addToBlossom(largestBlossom, mate[z]);
+			z = label[z];
+		}while(!marked[z]);
+		
+		int root = z;
+
+		
+		//backtrack from the original vertex again to the root;
+		z = v;
+		do{
+			addToBlossom(largestBlossom, z);
+			addToBlossom(largestBlossom, mate[z]);
+			z = label[z];
+		}while(z != root);
+		
+		//connect the blossom to the roots backlink, then remove the roots backlink
+		label[largestBlossom] = label[root];
+		label[root] = NOT_AN_INDEX;
+		
+	}
+	
+	private void addToBlossom( int b, int v){
+		blossom[b] = v;
+		Q.remove(v);
+		Q.add(b);
+		
+		//replace the backlink from v
+		label[v] = NOT_AN_INDEX;
+		
+		//replace links to v with links to b
+		for(int ii = 0; ii < largestBlossom; ii++){
+			if(label[ii] == v){
+				label[ii] = b;
+			}
+		}
 	}
 
 	private void augment(int u) {
