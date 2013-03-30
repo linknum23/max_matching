@@ -34,13 +34,13 @@ public class BlossomTest {
 		WeightedDigraph g2 = g.contractCycle(g.vertex(2),cycle1);
 		
 		ArrayList<Vertex> cycle2 = new ArrayList<Vertex>();
-		cycle2.add(g2.vertex(2));
+		cycle2.add(g2.vertex(5));
 		cycle2.add(g2.vertex(3));
 		cycle2.add(g2.vertex(4));
 		
-		WeightedDigraph g3 = g2.contractCycle(g2.vertex(2),cycle2);
-		WeightedDigraph g4 = g3.liftCycle((PseudoVertex)g3.vertex(2));
-		WeightedDigraph g5 = g4.liftCycle((PseudoVertex)g4.vertex(2));
+		WeightedDigraph g3 = g2.contractCycle(g2.vertex(5),cycle2);
+		WeightedDigraph g4 = g3.liftCycle((PseudoVertex)g3.vertex(6));
+		WeightedDigraph g5 = g4.liftCycle((PseudoVertex)g4.vertex(5));
 		
 		assertTrue("blossom expand/contract sequence incorrect", g5.equals(g));
 	}

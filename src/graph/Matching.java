@@ -167,5 +167,10 @@ public class Matching {
 		}
 		return s.substring(0, s.length()-1);
 	}
+
+
+	public int mate(int w) {
+		return matched[vid2mid(w)];
+	}
 	
 }

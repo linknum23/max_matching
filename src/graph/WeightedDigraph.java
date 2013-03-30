@@ -17,10 +17,12 @@ public class WeightedDigraph{
 	LinkedList<Edge>[]				adjList;
 	HashMap<Vertex, Integer>	vertices;
 	HashMap<Integer, Vertex>	vertexLookup;
+	private int	blossomStart;
 	
 	@SuppressWarnings("unchecked")
 	private WeightedDigraph(WeightedDigraph g) {
-		adjList = new LinkedList[g.vertices.size()];
+		blossomStart = g.blossomStart;
+		adjList = new LinkedList[g.adjList.length];
 		for (int i = 0; i < g.adjList.length; i++ ) {
 			adjList[i] = cloneEdges(g, i);
 		}
@@ -47,10 +49,12 @@ public class WeightedDigraph{
 	 * @param numVertices
 	 */
 	public WeightedDigraph(int numVertices) {
-		adjList = new LinkedList[numVertices];
-		vertices = new HashMap<Vertex, Integer>(numVertices);
-		vertexLookup = new HashMap<Integer, Vertex>(numVertices);
-		for (int i = 0; i < numVertices; i++ ) {
+		int requiredVertices = numVertices*2; //for blossoms
+		blossomStart = numVertices;
+		adjList = new LinkedList[requiredVertices];
+		vertices = new HashMap<Vertex, Integer>(requiredVertices);
+		vertexLookup = new HashMap<Integer, Vertex>(requiredVertices);
+		for (int i = 0; i < requiredVertices; i++ ) {
 			adjList[i] = new LinkedList<Edge>();
 		}
 	}
@@ -110,6 +114,14 @@ public class WeightedDigraph{
 	}
 	
 	public void addEdge(Edge e) {
+		
+		if(!vertices.containsKey(e.left)){
+			addVertex(e.left);
+		}
+		if(!vertices.containsKey(e.right)){
+			addVertex(e.right);
+		}
+		
 		List<Edge> nList = adjList[e.left];
 		nList.add(e);
 	}
@@ -172,8 +184,6 @@ public class WeightedDigraph{
 		return g;
 	}
 
-
-
 	/**
 	 * @param root
 	 * @param e
@@ -226,7 +236,10 @@ public class WeightedDigraph{
 	public WeightedDigraph contractCycle(Vertex root, ArrayList<Vertex> cycle) {
 		final boolean REMOVE_SELF_LOOPS = true;
 		WeightedDigraph g = new WeightedDigraph(this);
-		Vertex pseudo = new PseudoVertex(root.id(), cycle, this);
+		Vertex pseudo = new PseudoVertex(nextUnusedBlossom(), root.id(), cycle, this);
+		
+		//replace the outputs from the root that are contained within the cycle
+		removeOuts(g, root, cycle);
 		
 		// replace the id references of root with the pseudonode
 		replaceVertex(g, root, pseudo);
@@ -235,7 +248,7 @@ public class WeightedDigraph{
 		for (Vertex v : cycle) {
 			if (v != root) {
 				// add all of its neighbors to the pseudonode
-				addOutArcs(g, pseudo, g.eOuts(v));
+				addOutArcs(g, pseudo, trim(g.eOuts(v), cycle));
 				// remove all of its outgoing arcs ( remember this node is not connected to anything anymore
 				removeOuts(g, v);
 				// replace all arcs to the node with connections to the pseudo node
@@ -243,10 +256,31 @@ public class WeightedDigraph{
 			}
 		}
 		
-		//replace the outputs from the root that are contained within the cycle
-		removeOuts(g, pseudo, cycle);
-				
+		replaceVertexInArcs(g, root, pseudo, REMOVE_SELF_LOOPS);
+		
 		return g;
+	}
+
+	private List<Edge> trim(List<Edge> eOuts, List<Vertex> vertices) {
+		List<Edge> trimmed = new LinkedList<Edge>();
+		Iterator<Edge> it = eOuts.iterator();
+		while(it.hasNext()){
+			Edge e = it.next();
+			if(!vertices.contains(vertex(e.right))){
+				trimmed.add(e);
+			}
+		}
+		
+		return trimmed;
+	}
+
+	private int nextUnusedBlossom() {
+		for(int ii = blossomStart; ii < numVertices(); ii++){
+			if(!vertexLookup.containsKey(ii)){
+				return ii;
+			}
+		}
+		throw new RuntimeException("No unused blossoms, this should not be possible");
 	}
 
 	/**
@@ -256,9 +290,16 @@ public class WeightedDigraph{
 	 */
 	private void replaceVertex(WeightedDigraph g, Vertex vBefore, Vertex vAfter) {
 		g.vertexLookup.remove(vBefore.id());
-		g.vertexLookup.put(vBefore.id(), vAfter);
+		g.vertexLookup.put(vAfter.id(), vAfter);
 		g.vertices.remove(vBefore);
-		g.vertices.put(vAfter, vBefore.id());
+		g.vertices.put(vAfter, vAfter.id());
+		
+		LinkedList<Edge> edgesToSwap =cloneEdges(g, vBefore.id());
+		for(Edge e : edgesToSwap){
+			e.left = vAfter.id();
+		}
+		g.adjList[vAfter.id()] = edgesToSwap;
+		g.adjList[vBefore.id()].clear();
 	}
 	
 	private void removeOuts(WeightedDigraph g, Vertex v, ArrayList<Vertex> cycle) {
@@ -316,8 +357,8 @@ public class WeightedDigraph{
 			Iterator<Edge> it = g.eOuts(i).iterator();
 			while(it.hasNext()){
 				Edge oute = it.next();
-				if (oute.left == old.id()) {
-					oute.left = _new.id();
+				if (oute.right == old.id()) {
+					oute.right = _new.id();
 					//if(removeSelfLoops && oute.isLoop()){
 					//	it.remove();
 					//}
@@ -389,5 +430,9 @@ public class WeightedDigraph{
 
 	public int numVertices() {
 		return adjList.length;
+	}
+
+	public boolean contains(Edge e) {
+		return adjList[e.left].contains(e);
 	}
 }

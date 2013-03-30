@@ -5,11 +5,13 @@ import java.util.List;
 
 public class PseudoVertex implements Vertex {
 	int id;
+	int root;
 	ArrayList<Vertex> innerVertices;
 	WeightedDigraph g;
 	
-	public PseudoVertex(int id, ArrayList<Vertex> underlyingVertices, WeightedDigraph graph) {
+	public PseudoVertex(int id, int root, ArrayList<Vertex> underlyingVertices, WeightedDigraph graph) {
 		this.id = id;
+		this.root = root;
 		innerVertices = underlyingVertices;
 		g = graph;
 	}
@@ -33,7 +35,6 @@ public class PseudoVertex implements Vertex {
 	}
 
 	public Vertex underlying() {
-		return g.vertex(id());
+		return g.vertex(root);
 	}
-	
 }
