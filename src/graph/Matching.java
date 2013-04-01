@@ -66,9 +66,9 @@ public class Matching {
 		boolean setMatch = true;
 		//remove any even arcs
 		for(Edge e : path){
-			if(!setMatch){
+			//if(!setMatch){
 				remove(e);
-			}
+			//}
 			setMatch = !setMatch;
 		}
 		//add all of the odd arcs to the matching

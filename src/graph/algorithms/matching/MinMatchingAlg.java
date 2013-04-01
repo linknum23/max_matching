@@ -54,7 +54,7 @@ public class MinMatchingAlg {
 	public MinMatchingAlg(WeightedDigraph g, Matching m){
 		int graphSzWithMaxBlossoms = g.numVertices();//*2;
 		//mate = new int[graphSzWithMaxBlossoms];
-		matching = new Matching(g.numVertices());
+		matching = m;//new Matching(g.numVertices());
 		exposed = new int [graphSzWithMaxBlossoms];
 		seen = new boolean[graphSzWithMaxBlossoms];
 		label = new int[graphSzWithMaxBlossoms];
@@ -74,7 +74,7 @@ public class MinMatchingAlg {
 		//Arrays.fill(mate, NOT_AN_INDEX);
 		
 		//while there is a u in V with considered[u]=0 and mate[u]=0 do
-		stage: for(int u = 0; u < gOrig.numVertices(); u++){
+		stage: for(int u = 0; u < gOrig.numVertices()/2; u++){
 			//if(mate[u] == NOT_AN_INDEX){
 			if(!matching.isMatched(u)){
 				
