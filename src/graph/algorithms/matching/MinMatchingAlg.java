@@ -280,4 +280,30 @@ public class MinMatchingAlg {
 	private int maxBlossomId(){
 		return label.length-1;
 	}
+
+	public List<Vertex> O() {
+		throw new RuntimeException("Unimplemented");
+	}
+
+	public List<Vertex> Psi_O() {
+		throw new RuntimeException("Unimplemented");
+	}
+
+	public List<Vertex> I() {
+		throw new RuntimeException("Unimplemented");
+	}
+
+	public List<Vertex> Psi_I() {
+		throw new RuntimeException("Unimplemented");
+	}
+	
+	public boolean inSamePseudoNode(Edge e) {
+		//requires keeping track of the outermost pseudonode for each edge
+		throw new RuntimeException("Unimplemented");
+	}
+
+	public void expandBlossom(Vertex vertex3) {
+		// TODO Auto-generated method stub
+		throw new RuntimeException("Unimplemented");
+	}
 }

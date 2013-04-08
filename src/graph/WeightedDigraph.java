@@ -1,6 +1,7 @@
 package graph;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -434,5 +435,64 @@ public class WeightedDigraph{
 
 	public boolean contains(Edge e) {
 		return adjList[e.left].contains(e);
+	}
+
+	public Collection<Vertex> vertices() {
+		return vertexLookup.values();
+	}
+
+	public List<Edge> edges() {
+		List<Edge> edges = new ArrayList<Edge>(numVertices());
+		for(Vertex v : vertices()){
+			edges.addAll(eOuts(v));
+		}
+		return edges;
+	}
+	
+	public static WeightedDigraph random(int numVertices){
+		WeightedDigraph g = new WeightedDigraph(numVertices);
+		
+		//simple algorithm:
+		// generate a walk through the entire graph by sequentially connecting unconnected vertices until there arent any left
+		//  at this point the graph is a simple path
+		int[] path = new int[numVertices];
+		for(int ii = 0; ii < numVertices; ii++){
+			path[ii] = ii;
+		}
+		
+		for(int ii=0; ii < numVertices-1; ii++){
+			int temp = path[ii];
+			int swapIndex = ((int)(Math.random()*(numVertices-ii)))+1;
+			path[ii] = path[swapIndex];
+			path[swapIndex] = temp;
+		}
+		
+		//foreach edge on the path add the edge to the graph with a 
+		for(int ii=0; ii < numVertices-1; ii++){
+			int edgeWeight =  ((int)(Math.random()*numVertices))+1;
+			g.addEdge(new Edge(path[ii], path[ii+1],edgeWeight));
+		}
+		
+		// sprinkle random edges by using a random number generator 
+		// first generate the number of edges that you are going to create
+		// for each of these edges generate the two vertices that you are going to connect avoiding loops
+		int additionalEdges =  (int)(Math.random()*numVertices*(numVertices-1));
+		while(additionalEdges > 0){
+			int v1 = (int)(Math.random()*numVertices);
+			int v2 = (int)(Math.random()*numVertices);
+			List<Vertex> adj = g.vOuts(v1);
+			boolean found = false;
+			for(Vertex v : adj){
+				if(v.id()==v2){
+					found |= true;
+				}
+			}
+			if(!found){
+				g.addEdge(new Edge(v1, v2, ((int)(Math.random()*numVertices))+1));
+				additionalEdges--;
+			}
+		}
+		
+		return g;
 	}
 }

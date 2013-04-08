@@ -15,11 +15,13 @@ public class Matching {
 	 * with value corresponding to the second vertex in the matching. The index represents the 
 	 * first vertex in the matching.  
 	 */
-	private int[] matched;
+	private final int[] matched;
 	
 	/** The accumulated weight of the matching 
 	 */
 	private int fullWeight; // keeps track of the weight of the matching
+
+	private int	fullCount; //keeps track of the number of matches
 	
 	/** Create an empty matching on {@link numVertices}
 	 * @param numVertices the number of vertices in the corresponding graph used in the matching
@@ -28,6 +30,7 @@ public class Matching {
 		matched = new int[numVertices+1];
 		Arrays.fill(matched, UNMATCHED);
 		fullWeight = 0;
+		fullCount = 0;
 	}
 	
 	
@@ -41,6 +44,7 @@ public class Matching {
 		matched[key(match)] = value(match);
 		matched[key2(match)] = value2(match);
 		fullWeight += match.weight;
+		fullCount ++;
 	}	
 	
 	/** Remove an edge, {@link match}, from the matching 
@@ -53,9 +57,13 @@ public class Matching {
 		if(hadMatching && !validRemoval){
 			throw new RuntimeException("invalid removal, not the correct edge");
 		}
-		matched[key(match)] = UNMATCHED;
-		matched[key2(match)] = UNMATCHED;
-		fullWeight -= match.weight;
+		
+		if(hadMatching){
+			matched[key(match)] = UNMATCHED;
+			matched[key2(match)] = UNMATCHED;
+			fullWeight -= match.weight;
+			fullCount --;
+		}
 		return hadMatching;
 	}
 	
@@ -64,7 +72,7 @@ public class Matching {
 	 */
 	public void augment(List<Edge> path){
 		boolean setMatch = true;
-		//remove any even arcs
+		//remove any arcs in path
 		for(Edge e : path){
 			//if(!setMatch){
 				remove(e);
@@ -171,6 +179,39 @@ public class Matching {
 
 	public int mate(int w) {
 		return matched[vid2mid(w)];
+	}
+
+
+	public int matches() {
+		return fullCount;
+	}
+
+
+	public void clear() {
+		fullCount = 0;
+		fullWeight = 0;
+		for(int ii = 0; ii < matched.length; ii++){
+			matched[ii] = UNMATCHED;
+		}
+	}
+	
+	@Override
+	public boolean equals(Object arg0) {
+		if(arg0 instanceof Matching){
+			Matching m = (Matching)arg0;
+			if(m.fullCount == fullCount && m.fullWeight == fullWeight){
+				boolean equal = true;
+				//check each mate
+				for(int ii = 1; ii < matched.length; ii++){
+					equal &= matched[ii] == m.matched[ii];
+				}
+				return equal;
+			}else{
+				return false;
+			}
+		}else{
+			return false;
+		}
 	}
 	
 }
