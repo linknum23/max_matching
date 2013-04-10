@@ -69,11 +69,9 @@ public class UnweightedMatchingCalcTest {
 		g.parse("17 10 1");
 		g.parse("17 12 1");
 		
-		Matching m = new Matching(18);
-		
-		MinMatchingAlg mma = new MinMatchingAlg(g, m);
+		MinMatchingAlg mma = new MinMatchingAlg(g);
 		mma.run();
-		assertTrue(m.weight() == 8);
+		assertTrue(mma.matching().weight() == 8);
 	}
 
 }

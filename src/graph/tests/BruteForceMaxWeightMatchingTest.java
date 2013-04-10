@@ -37,7 +37,7 @@ public class BruteForceMaxWeightMatchingTest {
 		m2.add(g.eOuts(3).get(0));
 		
 		BruteForceMaxWeightedMatching bm = new BruteForceMaxWeightedMatching(g);
-		List<Matching> matchings = bm.run();
+		List<Matching> matchings = bm.runWeighted();
 		assertEquals("incorrect number of matchings found", matchings.size(), 2); 
 		assertTrue(matchings.get(0).equals(m1) ||matchings.get(0).equals(m2));
 		assertTrue(matchings.get(1).equals(m1) ||matchings.get(1).equals(m2));

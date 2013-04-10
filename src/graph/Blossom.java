@@ -6,20 +6,22 @@ import java.util.List;
 public class Blossom implements Vertex {
 	int root;
 	int ref;
-	ArrayList<Vertex> innerVertices;
+	List<Integer> innerVertices;
+	List<Edge> edges;
 	
-	public Blossom(int ref, int root, ArrayList<Vertex> underlyingVertices) {
+	public Blossom(int id, int root, List<Integer> underlyingVertices, List<Edge> edges) {
 		this.root = root;
-		this.ref = ref;
+		this.ref = id;
 		innerVertices = underlyingVertices;
+		this.edges = edges;
 	}
 
 	@Override
 	public int id() {
-		return root;
+		return ref;
 	}
 
-	public List<Vertex> vertices() {
+	public List<Integer> vertices() {
 		return innerVertices;
 	}
 	
@@ -28,8 +30,8 @@ public class Blossom implements Vertex {
 		return String.format("V%d{%s}", root, innerVertices.toString());
 	}
 
-	public int ref() {
-		return ref;
+	public int root() {
+		return root;
 	}
 
 	public void setRootId(int id) {
@@ -37,11 +39,25 @@ public class Blossom implements Vertex {
 	}
 
 	public boolean contains(int vid) {
-		for(Vertex v: vertices()){
-			if(v.id() == vid){
+		for(Integer v: vertices()){
+			if(v == vid){
 				return true;
 			}
 		}
 		return false;
+	}
+	
+	public boolean connectedTo(int id1, int id2){
+		for(Edge e : edges){
+			if((e.right == id1 && e.left == id2) || (e.right == id2 && e.left == id1)){
+				return true;
+			}
+		}
+		//a connection was not found
+		return false;
+	}
+
+	public List<Integer> cycle() {
+		return vertices();
 	}
 }

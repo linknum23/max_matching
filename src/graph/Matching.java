@@ -1,5 +1,6 @@
 package graph;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,7 +40,10 @@ public class Matching {
 	 */
 	public void add(Edge match){
 		if(isMatch(key(match)) || isMatch(key2(match))){
-			throw new RuntimeException("adding match to already matched edge");
+			System.out.printf("error adding match %s removing matches to both ends\n", match);
+			remove(match.left);
+			remove(match.right);
+			//throw new RuntimeException("adding match to already matched edge");
 		}
 		matched[key(match)] = value(match);
 		matched[key2(match)] = value2(match);
@@ -47,13 +51,22 @@ public class Matching {
 		fullCount ++;
 	}	
 	
+	public boolean remove(int v){
+		if(isMatched(v)){
+			int mate = mate(v);
+			return remove(new Edge(v,mate));
+		}else{
+			return false;
+		}
+	}
+	
 	/** Remove an edge, {@link match}, from the matching 
 	 * @param match the arc to remove as a match
 	 * @return success
 	 */
 	public boolean remove(Edge match){
 		boolean hadMatching = isMatch(key(match)) && isMatch(key2(match));
-		boolean validRemoval = matched[key(match)] == value(match) &&  matched[key2(match)] == value2(match);
+		boolean validRemoval = isValidRemoval(match);
 		if(hadMatching && !validRemoval){
 			throw new RuntimeException("invalid removal, not the correct edge");
 		}
@@ -66,18 +79,35 @@ public class Matching {
 		}
 		return hadMatching;
 	}
+
+
+	/**
+	 * @param match
+	 * @return
+	 */
+	private boolean isValidRemoval(Edge match) {
+		return Math.abs(matched[key(match)]) == Math.abs(value(match)) &&  Math.abs(matched[key2(match)]) == Math.abs(value2(match));
+	}
 	
 	/** Augment the matching along a path, starting be setting the first edge
 	 * @param path an ordered sequence of arcs
 	 */
 	public void augment(List<Edge> path){
 		boolean setMatch = true;
+		List<Edge> wait = new ArrayList<Edge>();
 		//remove any arcs in path
 		for(Edge e : path){
 			//if(!setMatch){
+			if(isValidRemoval(e)){
 				remove(e);
+			}else{
+				wait.add(e);
+			}
 			//}
-			setMatch = !setMatch;
+			//setMatch = !setMatch;
+		}
+		for(Edge e : wait){
+			remove(e);
 		}
 		//add all of the odd arcs to the matching
 		setMatch = true;
@@ -142,6 +172,10 @@ public class Matching {
 		return vid+1;
 	}
 	
+	private static int mid2vid(int mid){
+		return mid != UNMATCHED ? Math.abs(mid)-1 : -1;
+	}
+	
 	/** Check if a vertex belongs to the matching
 	 * @param mid matching id to check
 	 * @return whether or not {@link v} belongs to the matching
@@ -178,7 +212,7 @@ public class Matching {
 
 
 	public int mate(int w) {
-		return matched[vid2mid(w)];
+		return mid2vid(matched[vid2mid(w)]);
 	}
 
 

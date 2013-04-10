@@ -20,7 +20,7 @@ import graph.WeightedDigraph;
 
 public class MaxWeightedMatching {
 	private final WeightedDigraph												G;
-	private final WeightedDigraph												G_j;
+	//private final WeightedDigraph												G_j;
 	private final float[]																u;
 	private final float[]																gamma;
 	private final Matching															X;
@@ -41,6 +41,7 @@ public class MaxWeightedMatching {
 	};
 	
 	private Step	lastStep;
+	private final int[]	blossomIndices;
 	
 	public MaxWeightedMatching(WeightedDigraph g) {
 		G = g;
@@ -48,13 +49,14 @@ public class MaxWeightedMatching {
 		gamma = new float[g.numVertices()];
 		S = new int[g.numVertices()];
 		T = new int[g.numVertices()];
-		G_j = new WeightedDigraph(g.numVertices() / 2);
+		//G_j = new WeightedDigraph(g.numVertices() / 2);
 		X = new Matching(g.numVertices() / 2);
 		unscanned = (Queue<Integer>) new LinkedList<Integer>();
 		blossoms = new HashMap<Integer, LinkedList<Blossom>>(g.numVertices());
 		outerBlossoms = new HashMap<Integer, Blossom>(g.numVertices());
 		forwPath = new ArrayList<Integer>();
 		backPath = new ArrayList<Integer>();
+		blossomIndices = new int[g.numVertices()/2];
 	}
 	
 	public void run() {
@@ -443,8 +445,6 @@ public class MaxWeightedMatching {
 		blossoms.get(bOld.id()).remove(bOld);
 		bOld.setRootId(bNew);
 		blossoms.get(bOld.id()).add(bOld);
-		// TODO Auto-generated method stub
-		throw new RuntimeException("Unimplemented");
 	}
 	
 	private int backtraceTo(int[] trace, int id, int id2) {

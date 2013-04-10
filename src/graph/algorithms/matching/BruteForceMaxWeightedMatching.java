@@ -16,7 +16,7 @@ public class BruteForceMaxWeightedMatching {
 		G = g;
 	}
 	
-	public List<Matching> run() {
+	public List<Matching> runWeighted() {
 		List<Edge> edges = G.edges();
 		List<Matching> matchings = new LinkedList<Matching>();
 		Matching bestMatching = new Matching(G.numVertices());
@@ -26,6 +26,25 @@ public class BruteForceMaxWeightedMatching {
 			if (test.weight() == bestMatching.weight()) {
 				matchings.add(test);
 			} else if (test.weight() > bestMatching.weight()) {
+				matchings.clear();
+				bestMatching = test;
+				matchings.add(bestMatching);
+			}
+		}
+		return matchings;
+	}
+	
+	
+	public List<Matching> runUnweighted() {
+		List<Edge> edges = G.edges();
+		List<Matching> matchings = new LinkedList<Matching>();
+		Matching bestMatching = new Matching(G.numVertices());
+		int numPermutations =  powerOf2(edges.size());
+		for (int ii = 0; ii < numPermutations; ii++ ) {
+			Matching test = numToMatching(edges, ii);
+			if (test.matches() == bestMatching.matches()) {
+				matchings.add(test);
+			} else if (test.matches() > bestMatching.matches()) {
 				matchings.clear();
 				bestMatching = test;
 				matchings.add(bestMatching);
