@@ -18,12 +18,10 @@ public class WeightedDigraph{
 	LinkedList<Edge>[]				adjList;
 	HashMap<Vertex, Integer>	vertices;
 	HashMap<Integer, Vertex>	vertexLookup;
-	private int	blossomStart;
 	
 	@SuppressWarnings("unchecked")
 	private WeightedDigraph(WeightedDigraph g) {
-		blossomStart = g.blossomStart;
-		adjList = new LinkedList[g.adjList.length];
+		adjList = new LinkedList[g.vertices.size()];
 		for (int i = 0; i < g.adjList.length; i++ ) {
 			adjList[i] = cloneEdges(g, i);
 		}
@@ -50,12 +48,10 @@ public class WeightedDigraph{
 	 * @param numVertices
 	 */
 	public WeightedDigraph(int numVertices) {
-		int requiredVertices = numVertices*2; //for blossoms
-		blossomStart = numVertices;
-		adjList = new LinkedList[requiredVertices];
-		vertices = new HashMap<Vertex, Integer>(requiredVertices);
-		vertexLookup = new HashMap<Integer, Vertex>(requiredVertices);
-		for (int i = 0; i < requiredVertices; i++ ) {
+		adjList = new LinkedList[numVertices];
+		vertices = new HashMap<Vertex, Integer>(numVertices);
+		vertexLookup = new HashMap<Integer, Vertex>(numVertices);
+		for (int i = 0; i < numVertices; i++ ) {
 			adjList[i] = new LinkedList<Edge>();
 		}
 	}
@@ -115,11 +111,10 @@ public class WeightedDigraph{
 	}
 	
 	public void addEdge(Edge e) {
-		
-		if(!vertices.containsKey(e.left)){
+		if(!vertexLookup.containsKey(e.left)){
 			addVertex(e.left);
 		}
-		if(!vertices.containsKey(e.right)){
+		if(!vertexLookup.containsKey(e.right)){
 			addVertex(e.right);
 		}
 		
@@ -185,6 +180,8 @@ public class WeightedDigraph{
 		return g;
 	}
 
+
+
 	/**
 	 * @param root
 	 * @param e
@@ -237,10 +234,7 @@ public class WeightedDigraph{
 	public WeightedDigraph contractCycle(Vertex root, ArrayList<Vertex> cycle) {
 		final boolean REMOVE_SELF_LOOPS = true;
 		WeightedDigraph g = new WeightedDigraph(this);
-		Vertex pseudo = new PseudoVertex(nextUnusedBlossom(), root.id(), cycle, this);
-		
-		//replace the outputs from the root that are contained within the cycle
-		removeOuts(g, root, cycle);
+		Vertex pseudo = new PseudoVertex(root.id(), cycle, this);
 		
 		// replace the id references of root with the pseudonode
 		replaceVertex(g, root, pseudo);
@@ -249,7 +243,7 @@ public class WeightedDigraph{
 		for (Vertex v : cycle) {
 			if (v != root) {
 				// add all of its neighbors to the pseudonode
-				addOutArcs(g, pseudo, trim(g.eOuts(v), cycle));
+				addOutArcs(g, pseudo, g.eOuts(v));
 				// remove all of its outgoing arcs ( remember this node is not connected to anything anymore
 				removeOuts(g, v);
 				// replace all arcs to the node with connections to the pseudo node
@@ -257,31 +251,10 @@ public class WeightedDigraph{
 			}
 		}
 		
-		replaceVertexInArcs(g, root, pseudo, REMOVE_SELF_LOOPS);
-		
+		//replace the outputs from the root that are contained within the cycle
+		removeOuts(g, pseudo, cycle);
+				
 		return g;
-	}
-
-	private List<Edge> trim(List<Edge> eOuts, List<Vertex> vertices) {
-		List<Edge> trimmed = new LinkedList<Edge>();
-		Iterator<Edge> it = eOuts.iterator();
-		while(it.hasNext()){
-			Edge e = it.next();
-			if(!vertices.contains(vertex(e.right))){
-				trimmed.add(e);
-			}
-		}
-		
-		return trimmed;
-	}
-
-	private int nextUnusedBlossom() {
-		for(int ii = blossomStart; ii < numVertices(); ii++){
-			if(!vertexLookup.containsKey(ii)){
-				return ii;
-			}
-		}
-		throw new RuntimeException("No unused blossoms, this should not be possible");
 	}
 
 	/**
@@ -291,16 +264,9 @@ public class WeightedDigraph{
 	 */
 	private void replaceVertex(WeightedDigraph g, Vertex vBefore, Vertex vAfter) {
 		g.vertexLookup.remove(vBefore.id());
-		g.vertexLookup.put(vAfter.id(), vAfter);
+		g.vertexLookup.put(vBefore.id(), vAfter);
 		g.vertices.remove(vBefore);
-		g.vertices.put(vAfter, vAfter.id());
-		
-		LinkedList<Edge> edgesToSwap =cloneEdges(g, vBefore.id());
-		for(Edge e : edgesToSwap){
-			e.left = vAfter.id();
-		}
-		g.adjList[vAfter.id()] = edgesToSwap;
-		g.adjList[vBefore.id()].clear();
+		g.vertices.put(vAfter, vBefore.id());
 	}
 	
 	private void removeOuts(WeightedDigraph g, Vertex v, ArrayList<Vertex> cycle) {
@@ -358,8 +324,8 @@ public class WeightedDigraph{
 			Iterator<Edge> it = g.eOuts(i).iterator();
 			while(it.hasNext()){
 				Edge oute = it.next();
-				if (oute.right == old.id()) {
-					oute.right = _new.id();
+				if (oute.left == old.id()) {
+					oute.left = _new.id();
 					//if(removeSelfLoops && oute.isLoop()){
 					//	it.remove();
 					//}
@@ -433,22 +399,17 @@ public class WeightedDigraph{
 		return adjList.length;
 	}
 
-	public boolean contains(Edge e) {
-		return adjList[e.left].contains(e);
-	}
-
-	public Collection<Vertex> vertices() {
-		return vertexLookup.values();
-	}
-
 	public List<Edge> edges() {
-		List<Edge> edges = new ArrayList<Edge>(numVertices());
-		for(Vertex v : vertices()){
+		List<Edge> edges = new LinkedList<Edge>();
+		
+		for(Vertex v : vertices.keySet()){
 			edges.addAll(eOuts(v));
 		}
+		
 		return edges;
 	}
 	
+
 	public static WeightedDigraph random(int numVertices){
 		WeightedDigraph g = new WeightedDigraph(numVertices);
 		
@@ -462,7 +423,7 @@ public class WeightedDigraph{
 		
 		for(int ii=0; ii < numVertices-1; ii++){
 			int temp = path[ii];
-			int swapIndex = ((int)(Math.random()*(numVertices-ii)))+1;
+			int swapIndex = ((int)(Math.random()*(numVertices-ii)))+ii;
 			path[ii] = path[swapIndex];
 			path[swapIndex] = temp;
 		}
@@ -492,7 +453,31 @@ public class WeightedDigraph{
 				additionalEdges--;
 			}
 		}
+		//remove self loops and add opposite edges
+		clean(g);
 		
 		return g;
+	}
+
+	public Collection<Vertex> vertices() {
+		return vertexLookup.values();
+	}
+	
+	static void clean(WeightedDigraph g){
+		// add opposite edges
+		for(Vertex v : g.vertices()){
+			Iterator<Edge> it = g.eOuts(v).iterator();
+			while(it.hasNext()){
+				Edge e = it.next();
+				if(e.left == e.right){
+					it.remove();
+				}else if(!g.vOuts(e.right).contains(v)){
+					g.addEdge(new Edge(e.right, e.left, e.weight)); //something is wrong here!!!
+				}
+			}
+		}
+		if(g.edges().size() % 2 != 0){
+			throw new RuntimeException("Uneven number of edges, fail");
+		}
 	}
 }
